@@ -1,11 +1,11 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, Suspense } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { getAllAnime } from '@/libs/api-libs';
 import { CardSkeleton, Card, ButtonGroup } from '@/components/molecules';
-
+import { useUrlState } from '@/hooks/useUrlState';
 import { useSearch } from './SearchProvider';
 
 interface IAnimeData {
@@ -26,9 +26,12 @@ interface IAnimeData {
   }[];
 }
 
-const HomePage = () => {
-  const { searchTerm } = useSearch();
-  const [filterByGenre, setFilterByGenre] = useState('All');
+const HomePageContent = () => {
+  const { getParam, setParam, clearAllParams } = useUrlState();
+  const { searchTerm, setSearchTerm } = useSearch();
+
+  // Get state from URL parameters
+  const filterByGenre = getParam('genre', 'All');
 
   const {
     data: response,
@@ -45,7 +48,7 @@ const HomePage = () => {
     if (isError) {
       alert(error);
     }
-  }, [isError]);
+  }, [isError, error]);
 
   const filteredAnimeList = useMemo(() => {
     const animesData = response?.data?.data;
@@ -71,12 +74,46 @@ const HomePage = () => {
     return filtered;
   }, [response?.data?.data, filterByGenre, searchTerm]);
 
+  const handleGenreChange = (genre: string) => {
+    setParam('genre', genre);
+  };
+
+  const handleClearFilters = () => {
+    clearAllParams();
+    setSearchTerm('');
+  };
+
   return (
     <div>
       <div className="flex items-center gap-12">
         <h1 className="font-semibold text-lg">Browse Anime</h1>
-        <ButtonGroup defaultValue={filterByGenre} onChange={setFilterByGenre} />
+        <ButtonGroup
+          defaultValue={filterByGenre}
+          onChange={handleGenreChange}
+        />
       </div>
+
+      {/* Filter Info & Clear Button */}
+      {(searchTerm || filterByGenre !== 'All') && (
+        <div className="mt-4 mb-2 flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            {searchTerm && (
+              <p className="text-sm text-gray-600">
+                Search: "<span className="font-medium">{searchTerm}</span>"
+              </p>
+            )}
+            {filterByGenre !== 'All' && (
+              <p className="text-sm text-gray-600">
+                Genre: <span className="font-medium">{filterByGenre}</span>
+              </p>
+            )}
+            <p className="text-sm text-gray-500">
+              ({filteredAnimeList.length} results)
+            </p>
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6 mt-4 w-full">
         {isLoading ? (
           <>
@@ -85,8 +122,8 @@ const HomePage = () => {
             <CardSkeleton />
             <CardSkeleton />
           </>
-        ) : (
-          filteredAnimeList?.map((anime: IAnimeData) => (
+        ) : filteredAnimeList.length > 0 ? (
+          filteredAnimeList.map((anime: IAnimeData) => (
             <Card
               key={anime.mal_id}
               imgUrl={anime.images.webp.image_url}
@@ -96,9 +133,25 @@ const HomePage = () => {
               genres={anime.genres}
             />
           ))
+        ) : (
+          <div className="col-span-full text-center py-8">
+            <p className="text-gray-500">
+              {searchTerm
+                ? `No anime found for "${searchTerm}"${filterByGenre !== 'All' ? ` in ${filterByGenre} genre` : ''}`
+                : `No anime found for "${filterByGenre}" genre`}
+            </p>
+          </div>
         )}
       </div>
     </div>
+  );
+};
+
+const HomePage = () => {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <HomePageContent />
+    </Suspense>
   );
 };
 
