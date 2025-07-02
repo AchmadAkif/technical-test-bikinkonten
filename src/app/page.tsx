@@ -6,6 +6,8 @@ import { useQuery } from '@tanstack/react-query';
 import { getAllAnime } from '@/libs/api-libs';
 import { CardSkeleton, Card, ButtonGroup } from '@/components/molecules';
 
+import { useSearch } from './SearchProvider';
+
 interface IAnimeData {
   mal_id: number;
   title: string;
@@ -25,6 +27,7 @@ interface IAnimeData {
 }
 
 const HomePage = () => {
+  const { searchTerm } = useSearch();
   const [filterByGenre, setFilterByGenre] = useState('All');
 
   const {
@@ -49,16 +52,24 @@ const HomePage = () => {
 
     if (!animesData) return [];
 
-    if (filterByGenre === 'All') {
-      return animesData;
+    let filtered = animesData;
+
+    if (filterByGenre !== 'All') {
+      filtered = filtered.filter((anime: IAnimeData) => {
+        return anime.genres?.some(
+          genre => genre.name.toLowerCase() === filterByGenre.toLowerCase()
+        );
+      });
     }
 
-    return animesData.filter((anime: IAnimeData) => {
-      return anime.genres?.some(
-        genre => genre.name.toLowerCase() === filterByGenre.toLowerCase()
+    if (searchTerm && searchTerm.trim() !== '') {
+      filtered = filtered.filter((anime: IAnimeData) =>
+        anime.title.toLowerCase().includes(searchTerm.toLowerCase().trim())
       );
-    });
-  }, [response?.data?.data, filterByGenre]);
+    }
+
+    return filtered;
+  }, [response?.data?.data, filterByGenre, searchTerm]);
 
   return (
     <div>
