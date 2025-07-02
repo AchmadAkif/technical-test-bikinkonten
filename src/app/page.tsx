@@ -27,8 +27,8 @@ interface IAnimeData {
 }
 
 const HomePageContent = () => {
-  const { getParam, setParam, clearAllParams } = useUrlState();
-  const { searchTerm, setSearchTerm } = useSearch();
+  const { getParam, setParam } = useUrlState();
+  const { searchTerm } = useSearch();
 
   // Get state from URL parameters
   const filterByGenre = getParam('genre', 'All');
