@@ -1,3 +1,3 @@
-const displayName = 'RootContainer';
-
-export { displayName };
+export interface RootContainerProps {
+  children?: React.ReactNode;
+}

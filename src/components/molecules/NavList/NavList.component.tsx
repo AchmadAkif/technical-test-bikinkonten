@@ -6,8 +6,8 @@ const components = [
     href: '/',
   },
   {
-    title: 'Popular',
-    href: '/popular',
+    title: 'About',
+    href: '/about',
   },
 ];
 
