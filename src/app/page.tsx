@@ -78,11 +78,6 @@ const HomePageContent = () => {
     setParam('genre', genre);
   };
 
-  const handleClearFilters = () => {
-    clearAllParams();
-    setSearchTerm('');
-  };
-
   return (
     <div>
       <div className="flex items-center gap-12">
